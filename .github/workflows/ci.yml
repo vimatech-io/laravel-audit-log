@@ -30,8 +30,8 @@ jobs:
             pest_plugin: '^3.0'
           - laravel: '13.*'
             testbench: '11.*'
-            pest: '^5.0'
-            pest_plugin: '^5.0'
+            pest: '^4.0'
+            pest_plugin: '^4.0'
 
     name: PHP ${{ matrix.php }} - Laravel ${{ matrix.laravel }} - ${{ matrix.stability }}
 
