@@ -1,9 +1,8 @@
 # Laravel Audit Log
 
-[![Tests](https://github.com/vimatech-io/laravel-audit-log/actions/workflows/tests.yml/badge.svg)](https://github.com/vimatech-io/laravel-audit-log/actions/workflows/tests.yml)
-[![PHPStan](https://github.com/vimatech-io/laravel-audit-log/actions/workflows/phpstan.yml/badge.svg)](https://github.com/vimatech-io/laravel-audit-log/actions/workflows/phpstan.yml)
-[![Pint](https://github.com/vimatech-io/laravel-audit-log/actions/workflows/pint.yml/badge.svg)](https://github.com/vimatech-io/laravel-audit-log/actions/workflows/pint.yml)
+[![CI](https://github.com/vimatech-io/laravel-audit-log/actions/workflows/ci.yml/badge.svg)](https://github.com/vimatech-io/laravel-audit-log/actions/workflows/ci.yml)
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/vimatech/laravel-audit-log.svg)](https://packagist.org/packages/vimatech/laravel-audit-log)
+[![Total Downloads](https://img.shields.io/packagist/dt/vimatech/laravel-audit-log.svg)](https://packagist.org/packages/vimatech/laravel-audit-log)
 [![License](https://img.shields.io/packagist/l/vimatech/laravel-audit-log.svg)](https://packagist.org/packages/vimatech/laravel-audit-log)
 
 **Append-only, tenant-aware audit log for Laravel.**

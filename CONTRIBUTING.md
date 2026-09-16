@@ -1,29 +1,22 @@
 # Contributing
 
-Thank you for considering contributing to `laravel-audit-log`!
+Thank you for considering contributing to Laravel Audit Log!
 
-## Requirements
-
-- PHP 8.3+
-- Composer
-
-## Setup
+## Development Setup
 
 ```bash
-git clone https://github.com/vimatech/laravel-audit-log.git
+git clone https://github.com/vimatech-io/laravel-audit-log.git
 cd laravel-audit-log
 composer install
 ```
 
-## Tests
+## Running Tests
 
 ```bash
 composer test
 ```
 
 ## Code Style
-
-This project uses [Laravel Pint](https://laravel.com/docs/pint) for code formatting:
 
 ```bash
 composer format
@@ -37,10 +30,11 @@ composer analyse
 
 ## Pull Requests
 
-1. Fork the repository
-2. Create a branch: `git checkout -b feat/your-feature`
-3. Make your changes and add tests
-4. Ensure all tests pass and code is formatted
-5. Submit a pull request
+- Fork the repo, create a feature branch
+- Add tests for new features
+- Ensure all tests pass and PHPStan is clean
+- Submit a PR against `main`
 
-Please keep PRs focused — one feature or fix per PR.
+## Security Vulnerabilities
+
+Please report security issues to hello@adelzemzemi.com directly.
