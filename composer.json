@@ -1,0 +1,62 @@
+{
+    "name": "vimatech/laravel-audit-log",
+    "description": "Append-only, tenant-aware audit log for Laravel.",
+    "keywords": ["laravel", "audit", "audit-log", "activity", "multi-tenant", "append-only", "compliance"],
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Adel Zemzemi",
+            "email": "hello@adelzemzemi.dev"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "illuminate/console": "^11.0|^12.0|^13.0",
+        "illuminate/contracts": "^11.0|^12.0|^13.0",
+        "illuminate/database": "^11.0|^12.0|^13.0",
+        "illuminate/http": "^11.0|^12.0|^13.0",
+        "illuminate/support": "^11.0|^12.0|^13.0"
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.0",
+        "orchestra/testbench": "^9.0|^10.0|^11.0",
+        "pestphp/pest": "^3.0|^4.0|^5.0",
+        "pestphp/pest-plugin-laravel": "^3.0|^4.0|^5.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Vimatech\\AuditLog\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Vimatech\\AuditLog\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Vimatech\\AuditLog\\AuditLogServiceProvider"
+            ],
+            "aliases": {
+                "Audit": "Vimatech\\AuditLog\\Facades\\Audit"
+            }
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/pest",
+        "analyse": "vendor/bin/phpstan analyse",
+        "format": "vendor/bin/pint",
+        "check": ["vendor/bin/pint --test", "@analyse", "@test"]
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
