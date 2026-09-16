@@ -151,6 +151,26 @@ Then point `audit-log.retention` at it and schedule `php artisan audit-log:prune
 composer check   # pint --test, phpstan, pest
 ```
 
+## Contributing
+
+Contributions are welcome.
+
+Please ensure:
+- Tests pass (`composer test`)
+- PHPStan passes (`composer analyse`)
+- Code style is formatted with Pint (`composer format`)
+
+Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
+
+## Security Vulnerabilities
+
+Please review our [Security Policy](SECURITY.md) for reporting vulnerabilities.
+
 ## License
 
-MIT. See [LICENSE](LICENSE).
+The MIT License (MIT). Please see [License File](LICENSE) for more information.
+
+## Credits
+
+Built and maintained by [Vimatech](https://vimatech.io).
+Created by [Adel Zemzemi](https://github.com/adelzemzemi).
