@@ -44,7 +44,7 @@ php artisan vendor:publish --tag=audit-log-migrations
 php artisan migrate
 ```
 
-Publish the config if you need to rename the table, swap the model, list guards or choose a retention policy:
+Publish the config if you need to rename the table, use a dedicated database connection, swap the model, list guards or choose a retention policy:
 
 ```bash
 php artisan vendor:publish --tag=audit-log-config
@@ -106,7 +106,9 @@ final class Lease extends Model implements ProvidesAuditTenant
 }
 ```
 
-`lease.created`, `lease.updated` (changed attributes only, with `before` and `after`) and `lease.deleted` are recorded. Timestamps, `password`, `remember_token`, hidden attributes and `$auditExclude` never reach the log. Keys are sorted so two identical changes produce identical diffs.
+`lease.created`, `lease.updated` (changed attributes only, with `before` and `after`) and `lease.deleted` are recorded. Models using `SoftDeletes` also get `lease.restored` and `lease.force_deleted`, and a force delete never produces a duplicate `lease.deleted`. Timestamps, `password`, `remember_token`, hidden attributes and `$auditExclude` never reach the log. Keys are sorted so two identical changes produce identical diffs.
+
+Values are recorded as stored in the database (raw attributes, before casting).
 
 ## Reading
 
@@ -124,6 +126,8 @@ AuditEntry::query()
 ## Immutability
 
 Updating or deleting an entry through Eloquent throws `AuditEntryIsImmutable`. Raw queries hit a database trigger and fail with `audit log is append-only`. Disable the trigger with `audit-log.append_only_trigger = false` on drivers that lack support.
+
+Row triggers do not fire on `TRUNCATE` (MySQL, PostgreSQL) or on dropping the table. Revoke those privileges from the application's database user, or put the log on a dedicated connection with `audit-log.connection` and an insert-only account.
 
 ## Retention
 
@@ -143,7 +147,7 @@ final class KeepTwoYears implements RetentionPolicy
 }
 ```
 
-Then point `audit-log.retention` at it and schedule `php artisan audit-log:prune`.
+`AppendOnlyTrigger::suspended()` works on the connection set in `audit-log.connection`; pass a third argument to target another one. Then point `audit-log.retention` at it and schedule `php artisan audit-log:prune`.
 
 ## Testing
 

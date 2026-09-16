@@ -15,6 +15,12 @@ return [
     ],
 
     /*
+     * Database connection holding the entries table. Null means the default
+     * connection. The migration and the append-only triggers follow this value.
+     */
+    'connection' => null,
+
+    /*
      * Install database triggers that reject UPDATE and DELETE on the entries table.
      * Supported drivers: pgsql, mysql, mariadb, sqlite. Model-level immutability
      * is always enforced; the trigger protects against raw queries and other clients.

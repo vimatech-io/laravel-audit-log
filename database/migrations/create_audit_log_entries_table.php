@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Vimatech\AuditLog\Models\AuditEntry;
 use Vimatech\AuditLog\Support\AppendOnlyTrigger;
 
 return new class extends Migration
@@ -12,8 +13,9 @@ return new class extends Migration
     public function up(): void
     {
         $table = $this->table();
+        $connection = $this->connection();
 
-        Schema::create($table, function (Blueprint $table): void {
+        Schema::connection($connection)->create($table, function (Blueprint $table): void {
             $table->id();
 
             $table->nullableMorphs('tenant');
@@ -30,7 +32,7 @@ return new class extends Migration
 
             $table->string('ip', 45)->nullable();
             $table->text('user_agent')->nullable();
-            $table->string('request_id', 64)->nullable()->index();
+            $table->string('request_id', AuditEntry::REQUEST_ID_LENGTH)->nullable()->index();
             $table->json('metadata')->nullable();
 
             $table->timestamp('occurred_at')->index();
@@ -39,16 +41,25 @@ return new class extends Migration
         });
 
         if (config('audit-log.append_only_trigger', true)) {
-            AppendOnlyTrigger::install($table);
+            AppendOnlyTrigger::install($table, $connection);
         }
     }
 
     public function down(): void
     {
         $table = $this->table();
+        $connection = $this->connection();
 
-        AppendOnlyTrigger::remove($table);
-        Schema::dropIfExists($table);
+        AppendOnlyTrigger::remove($table, $connection);
+        Schema::connection($connection)->dropIfExists($table);
+    }
+
+    private function connection(): ?string
+    {
+        /** @var string|null $connection */
+        $connection = config('audit-log.connection');
+
+        return $connection;
     }
 
     private function table(): string

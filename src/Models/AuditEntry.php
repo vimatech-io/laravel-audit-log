@@ -34,6 +34,8 @@ use Vimatech\AuditLog\Exceptions\AuditEntryIsImmutable;
  */
 class AuditEntry extends Model
 {
+    public const REQUEST_ID_LENGTH = 64;
+
     public $timestamps = false;
 
     protected $guarded = [];
@@ -44,6 +46,14 @@ class AuditEntry extends Model
         'metadata' => 'array',
         'occurred_at' => 'immutable_datetime',
     ];
+
+    public function getConnectionName(): ?string
+    {
+        /** @var string|null $connection */
+        $connection = config('audit-log.connection');
+
+        return $connection ?? parent::getConnectionName();
+    }
 
     public function getTable(): string
     {

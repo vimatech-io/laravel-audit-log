@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 use Vimatech\AuditLog\AuditContext;
+use Vimatech\AuditLog\Models\AuditEntry;
 
 final class SetAuditContext
 {
@@ -26,12 +27,23 @@ final class SetAuditContext
         $this->context
             ->actingAs($actor, $guard)
             ->fromRequest(
-                requestId: (string) ($request->header('X-Request-Id') ?: Str::uuid()),
+                requestId: $this->requestId($request),
                 ip: config('audit-log.capture.ip', true) ? $request->ip() : null,
                 userAgent: config('audit-log.capture.user_agent', true) ? $request->userAgent() : null,
             );
 
         return $next($request);
+    }
+
+    private function requestId(Request $request): string
+    {
+        $header = trim((string) $request->header('X-Request-Id', ''));
+
+        if ($header === '') {
+            return (string) Str::uuid();
+        }
+
+        return Str::limit($header, AuditEntry::REQUEST_ID_LENGTH, '');
     }
 
     /** @return array{0: Model|null, 1: string|null} */

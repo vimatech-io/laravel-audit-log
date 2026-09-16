@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Vimatech\AuditLog\Concerns;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Vimatech\AuditLog\AuditRecorder;
 
@@ -33,7 +34,25 @@ trait Auditable
 
         static::deleted(function (Model $model): void {
             /** @var Model&Auditable $model */
+            if ($model->isBeingForceDeleted()) {
+                return;
+            }
+
             $model->recordAudit('deleted', $model->auditableAttributes($model->getAttributes()), []);
+        });
+
+        if (! static::auditsSoftDeletes()) {
+            return;
+        }
+
+        static::restored(function (Model $model): void {
+            /** @var Model&Auditable $model */
+            $model->recordAudit('restored', [], $model->auditableAttributes($model->getAttributes()));
+        });
+
+        static::forceDeleted(function (Model $model): void {
+            /** @var Model&Auditable $model */
+            $model->recordAudit('force_deleted', $model->auditableAttributes($model->getAttributes()), []);
         });
     }
 
@@ -74,5 +93,15 @@ trait Auditable
             before: $before,
             after: $after,
         );
+    }
+
+    private static function auditsSoftDeletes(): bool
+    {
+        return in_array(SoftDeletes::class, class_uses_recursive(static::class), true);
+    }
+
+    private function isBeingForceDeleted(): bool
+    {
+        return static::auditsSoftDeletes() && method_exists($this, 'isForceDeleting') && $this->isForceDeleting();
     }
 }

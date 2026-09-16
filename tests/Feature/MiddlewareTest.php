@@ -45,3 +45,19 @@ it('picks the first authenticated guard from the configured list', function (): 
         ->and($entry->actor_guard)->toBe('admin')
         ->and($entry->request_id)->not->toBeEmpty();
 });
+
+it('truncates an oversized X-Request-Id to the column length', function (): void {
+    Route::middleware(SetAuditContext::class)->get('/probe', fn () => Audit::record('probe')->id);
+
+    $this->withHeaders(['X-Request-Id' => str_repeat('a', 100)])->get('/probe')->assertOk();
+
+    expect(AuditEntry::query()->sole()->request_id)->toBe(str_repeat('a', AuditEntry::REQUEST_ID_LENGTH));
+});
+
+it('generates a request id when the header is blank', function (): void {
+    Route::middleware(SetAuditContext::class)->get('/probe', fn () => Audit::record('probe')->id);
+
+    $this->withHeaders(['X-Request-Id' => '   '])->get('/probe')->assertOk();
+
+    expect(AuditEntry::query()->sole()->request_id)->toBeUuid();
+});

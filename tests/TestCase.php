@@ -48,6 +48,13 @@ abstract class TestCase extends BaseTestCase
             $table->timestamps();
         });
 
+        Schema::create('documents', function (Blueprint $table): void {
+            $table->id();
+            $table->string('title');
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
         Schema::create('leases', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('workspace_id');

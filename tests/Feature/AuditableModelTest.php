@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Vimatech\AuditLog\Models\AuditEntry;
+use Vimatech\AuditLog\Tests\Fixtures\Document;
 use Vimatech\AuditLog\Tests\Fixtures\Lease;
 use Vimatech\AuditLog\Tests\Fixtures\Workspace;
 
@@ -54,4 +55,25 @@ it('records deletion with the last known attributes', function (): void {
 
     expect($entry->before)->toBe(['id' => $lease->id, 'rent_minor' => 120000, 'tenant_name' => 'Jane'])
         ->and($entry->after)->toBeNull();
+});
+
+it('records soft deletion once, then restoration', function (): void {
+    $document = Document::create(['title' => 'Contract']);
+
+    $document->delete();
+    $document->restore();
+
+    expect(AuditEntry::query()->forSubject($document)->orderBy('id')->pluck('action')->all())
+        ->toBe(['document.created', 'document.deleted', 'document.restored'])
+        ->and(AuditEntry::query()->forAction('document.deleted')->sole()->before)->toBe(['id' => $document->id, 'title' => 'Contract'])
+        ->and(AuditEntry::query()->forAction('document.restored')->sole()->after)->toBe(['id' => $document->id, 'title' => 'Contract']);
+});
+
+it('records a force deletion as force_deleted, without a duplicate deleted entry', function (): void {
+    $document = Document::create(['title' => 'Contract']);
+
+    $document->forceDelete();
+
+    expect(AuditEntry::query()->forSubject($document)->orderBy('id')->pluck('action')->all())
+        ->toBe(['document.created', 'document.force_deleted']);
 });

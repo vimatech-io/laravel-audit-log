@@ -18,3 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Query scopes `forTenant`, `forSubject`, `byActor`, `forAction`, `between`, `latestFirst`
 - `RetentionPolicy` contract, `KeepForever` default, `audit-log:prune` command and `AppendOnlyTrigger::suspended()`
 - `AuditEntryRecorded` event
+- `audit-log.connection` to keep the entries table on a dedicated connection; model, migration and triggers follow it
+- `Auditable` records `restored` and `force_deleted` for models using `SoftDeletes`
+
+### Fixed
+
+- `SetAuditContext` truncates `X-Request-Id` to the column length instead of failing the insert
+- A force delete on a soft-deletable model no longer records a duplicate `deleted` entry
+- PostgreSQL trigger renamed to `{table}_append_only` to match what it enforces
