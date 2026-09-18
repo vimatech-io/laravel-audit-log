@@ -57,6 +57,105 @@ jobs:
       - name: Run tests
         run: vendor/bin/pest
 
+  # This package installs an append-only trigger with SQL specific to each
+  # engine (src/Support/AppendOnlyTrigger.php); the eight other packages in
+  # the canon ship no engine-specific SQL and have no equivalent job. Run
+  # once per engine on the newest supported PHP/Laravel/Pest combination:
+  # the trigger SQL itself doesn't change across Laravel versions, so the
+  # `tests` matrix above already covers that axis.
+  postgres-append-only:
+    runs-on: ubuntu-latest
+    name: Append-only trigger on PostgreSQL
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: audit_log
+          POSTGRES_PASSWORD: audit_log
+          POSTGRES_DB: audit_log
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd=pg_isready
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, pdo_pgsql, openssl
+          coverage: none
+
+      - name: Install dependencies
+        run: |
+          composer config policy.advisories.block false
+          composer require "laravel/framework:13.*" "orchestra/testbench:11.*" "pestphp/pest:^4.0" "pestphp/pest-plugin-laravel:^4.0" --no-interaction --no-update --dev
+          composer update --prefer-stable --no-interaction
+
+      - name: Run tests against PostgreSQL
+        env:
+          AUDIT_LOG_TEST_DRIVER: pgsql
+          AUDIT_LOG_TEST_HOST: 127.0.0.1
+          AUDIT_LOG_TEST_PORT: 5432
+          AUDIT_LOG_TEST_DATABASE: audit_log
+          AUDIT_LOG_TEST_USERNAME: audit_log
+          AUDIT_LOG_TEST_PASSWORD: audit_log
+        run: vendor/bin/pest
+
+  mysql-append-only:
+    runs-on: ubuntu-latest
+    name: Append-only trigger on MySQL/MariaDB
+
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: audit_log
+          MYSQL_DATABASE: audit_log
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, pdo_mysql, openssl
+          coverage: none
+
+      - name: Install dependencies
+        run: |
+          composer config policy.advisories.block false
+          composer require "laravel/framework:13.*" "orchestra/testbench:11.*" "pestphp/pest:^4.0" "pestphp/pest-plugin-laravel:^4.0" --no-interaction --no-update --dev
+          composer update --prefer-stable --no-interaction
+
+      - name: Run tests against MySQL
+        env:
+          # MySQL 8 refuses CREATE TRIGGER from an unprivileged user while
+          # binary logging is on (error 1419); root carries the SUPER
+          # privilege that grants it, so the test connection uses root
+          # against this throwaway service database, not an app-shaped user.
+          AUDIT_LOG_TEST_DRIVER: mysql
+          AUDIT_LOG_TEST_HOST: 127.0.0.1
+          AUDIT_LOG_TEST_PORT: 3306
+          AUDIT_LOG_TEST_DATABASE: audit_log
+          AUDIT_LOG_TEST_USERNAME: root
+          AUDIT_LOG_TEST_PASSWORD: audit_log
+        run: vendor/bin/pest
+
   quality:
     runs-on: ubuntu-latest
     name: Static analysis & code style
