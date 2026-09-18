@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 
 final class AuditContext
 {
+    private ?Model $tenant = null;
+
     private ?Model $actor = null;
 
     private ?string $actorGuard = null;
@@ -21,6 +23,13 @@ final class AuditContext
     private ?string $ip = null;
 
     private ?string $userAgent = null;
+
+    public function inTenant(?Model $tenant): self
+    {
+        $this->tenant = $tenant;
+
+        return $this;
+    }
 
     public function actingAs(?Model $actor, ?string $guard = null): self
     {
@@ -51,6 +60,11 @@ final class AuditContext
         $this->userAgent = $userAgent;
 
         return $this;
+    }
+
+    public function tenant(): ?Model
+    {
+        return $this->tenant;
     }
 
     public function actor(): ?Model
@@ -90,6 +104,7 @@ final class AuditContext
 
     public function flush(): void
     {
+        $this->tenant = null;
         $this->actor = null;
         $this->actorGuard = null;
         $this->impersonator = null;

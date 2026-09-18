@@ -23,6 +23,12 @@ final class AuditLogServiceProvider extends ServiceProvider
 
             return $this->app->make($policy);
         });
+
+        $this->app->terminating(function (): void {
+            if ($this->app->resolved(AuditContext::class)) {
+                $this->app->make(AuditContext::class)->flush();
+            }
+        });
     }
 
     public function boot(): void
