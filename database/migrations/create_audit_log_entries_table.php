@@ -18,31 +18,41 @@ return new class extends Migration
         Schema::connection($connection)->create($table, function (Blueprint $table): void {
             $table->id();
 
-            $table->nullableMorphs('tenant');
-            $table->nullableMorphs('actor');
-            $table->string('actor_guard', 64)->nullable();
-            $table->nullableMorphs('impersonator');
+            $table->string('tenant_type')->nullable();
+            $table->string('tenant_id', AuditEntry::MORPH_KEY_LENGTH)->nullable();
 
-            $table->string('action', 128)->index();
-            $table->nullableMorphs('subject');
+            $table->string('actor_type')->nullable();
+            $table->string('actor_id', AuditEntry::MORPH_KEY_LENGTH)->nullable();
+            $table->string('actor_guard', AuditEntry::ACTOR_GUARD_LENGTH)->nullable();
+
+            $table->string('impersonator_type')->nullable();
+            $table->string('impersonator_id', AuditEntry::MORPH_KEY_LENGTH)->nullable();
+
+            $table->string('action', AuditEntry::ACTION_LENGTH);
+
+            $table->string('subject_type')->nullable();
+            $table->string('subject_id', AuditEntry::MORPH_KEY_LENGTH)->nullable();
 
             $table->json('before')->nullable();
             $table->json('after')->nullable();
             $table->text('reason')->nullable();
 
-            $table->string('ip', 45)->nullable();
+            $table->string('ip', AuditEntry::IP_LENGTH)->nullable();
             $table->text('user_agent')->nullable();
-            $table->string('request_id', AuditEntry::REQUEST_ID_LENGTH)->nullable()->index();
+            $table->string('request_id', AuditEntry::REQUEST_ID_LENGTH)->nullable();
             $table->json('metadata')->nullable();
 
-            $table->timestamp('occurred_at')->index();
+            $table->dateTime('occurred_at');
 
             $table->index(['tenant_type', 'tenant_id', 'occurred_at']);
+            $table->index(['subject_type', 'subject_id', 'occurred_at']);
+            $table->index(['actor_type', 'actor_id', 'occurred_at']);
+            $table->index('action');
+            $table->index('occurred_at');
+            $table->index('request_id');
         });
 
-        if (config('audit-log.append_only_trigger', true)) {
-            AppendOnlyTrigger::install($table, $connection);
-        }
+        AppendOnlyTrigger::install($table, $connection);
     }
 
     public function down(): void

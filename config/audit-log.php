@@ -21,11 +21,13 @@ return [
     'connection' => null,
 
     /*
-     * Install database triggers that reject UPDATE and DELETE on the entries table.
-     * Supported drivers: pgsql, mysql, mariadb, sqlite. Model-level immutability
-     * is always enforced; the trigger protects against raw queries and other clients.
+     * Refuse to record an entry when no tenant could be resolved, from the argument,
+     * from the subject's ProvidesAuditTenant, or from AuditContext. Off by default:
+     * a null tenant is a faithful record of an action that had none, and not every
+     * application is multi-tenant. Turn it on to catch the call site that forgot,
+     * and mark the genuinely tenant-less ones with ->withoutTenant().
      */
-    'append_only_trigger' => true,
+    'require_tenant' => false,
 
     /*
      * Guards inspected by the SetAuditContext middleware to resolve the acting user.
@@ -48,9 +50,10 @@ return [
     'always_exclude' => ['created_at', 'updated_at', 'deleted_at', 'password', 'remember_token'],
 
     /*
-     * Retention policy resolved when running `audit-log:prune`.
-     * The default never deletes anything. Provide your own implementation of
-     * Vimatech\AuditLog\Contracts\RetentionPolicy to prune.
+     * Retention policy resolved when running `audit-log:prune`. The default keeps
+     * every entry. A policy carrying a value, such as KeepFor::days(730), cannot be
+     * named here and still survive `config:cache`: bind RetentionPolicy in a service
+     * provider instead.
      */
     'retention' => KeepForever::class,
 ];

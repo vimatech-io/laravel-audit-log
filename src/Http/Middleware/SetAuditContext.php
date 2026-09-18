@@ -24,6 +24,9 @@ final class SetAuditContext
     {
         [$actor, $guard] = $this->resolveActor($request);
 
+        // A worker loop reuses the container, so this instance may still hold the previous request.
+        $this->context->flush();
+
         $this->context
             ->actingAs($actor, $guard)
             ->fromRequest(
