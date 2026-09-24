@@ -163,7 +163,7 @@ AuditEntry::query()->forCurrentTenant()->latestFirst()->paginate();   // the ten
 
 ## Immutability
 
-Every write path the package owns is closed. Updating or deleting an entry through a model throws `AuditEntryIsImmutable`, and so does `update()`, `delete()`, `truncate()`, `upsert()`, `increment()` and `decrement()` on the query builder, which no model event would have seen. A raw statement that goes around Eloquent entirely hits a database trigger and fails with `audit log is append-only`.
+Every write path the package owns is closed. Updating or deleting an entry through a model throws `AuditEntryIsImmutable`, and so does every query builder method that writes without loading a row, which no model event would have seen: `update()`, `delete()`, `forceDelete()`, `truncate()`, `upsert()`, `increment()`, `decrement()`, `incrementEach()` and `decrementEach()`. A raw statement that goes around Eloquent entirely hits a database trigger and fails with `audit log is append-only`.
 
 The triggers are not optional: the migration installs them and refuses to run on a driver that cannot carry them, rather than leaving a log that only looks append-only. The supported drivers are PostgreSQL, MySQL, MariaDB and SQLite.
 

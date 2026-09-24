@@ -59,6 +59,15 @@ it('refuses truncate, increment and upsert through the query builder', function 
         ->and(AuditEntry::query()->count())->toBe(1);
 });
 
+it('refuses incrementEach and decrementEach through the query builder', function (): void {
+    Audit::record('a');
+
+    expect(fn () => AuditEntry::query()->incrementEach(['id' => 1]))->toThrow(AuditEntryIsImmutable::class)
+        ->and(fn () => AuditEntry::query()->decrementEach(['id' => 1]))->toThrow(AuditEntryIsImmutable::class)
+        ->and(AuditEntry::query()->count())->toBe(1)
+        ->and(AuditEntry::query()->sole()->action)->toBe('a');
+});
+
 it('blocks TRUNCATE on the engines whose triggers can see it', function (): void {
     $driver = DB::connection()->getDriverName();
 

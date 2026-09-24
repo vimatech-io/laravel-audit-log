@@ -13,7 +13,7 @@ First release.
 
 - Append-only `audit_log_entries` table with polymorphic `tenant`, `actor`, `impersonator` and `subject`
 - `Audit::record()` and the fluent `Audit::action()->on()->from()->to()->because()->record()` builder, with `withoutTenant()` and `withoutReason()` for entries that genuinely have neither
-- Immutability enforced at the model level (`AuditEntryIsImmutable`) and the database level: triggers on PostgreSQL, MySQL/MariaDB and SQLite block `UPDATE` and `DELETE`, and every mutating query builder method (`update`, `delete`, `truncate`, `upsert`, `increment`, `decrement`) is refused too
+- Immutability enforced at the model level (`AuditEntryIsImmutable`) and the database level: triggers on PostgreSQL, MySQL/MariaDB and SQLite block `UPDATE` and `DELETE`, and every mutating query builder method (`update`, `delete`, `forceDelete`, `truncate`, `upsert`, `increment`, `decrement`, `incrementEach`, `decrementEach`) is refused too
 - Request-scoped `AuditContext`, filled by the `SetAuditContext` middleware (actor, guard, request id, ip, user agent); cleared at the request and job boundary, so nothing carries into the next request or the next queued job under Octane, FrankenPHP or a plain worker loop
 - `Auditable` trait recording `created`, `updated`, `deleted`, and, on models using `SoftDeletes`, `restored` and `force_deleted`; diffs compare raw, uncast attribute values and exclude `$hidden`, `$auditExclude` and `audit-log.always_exclude`
 - Tenant resolution in three steps: the explicit argument, the subject's `ProvidesAuditTenant`, then `AuditContext`; `audit-log.require_tenant` refuses an entry that resolved none
