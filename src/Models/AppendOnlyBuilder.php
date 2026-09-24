@@ -10,7 +10,7 @@ use Vimatech\AuditLog\Exceptions\AuditEntryIsImmutable;
 
 /**
  * Model events fire on an instance, so they never see a query builder write.
- * These are the seven methods that reach the table without loading a row.
+ * These are the nine methods that reach the table without loading a row.
  *
  * @extends Builder<AuditEntry>
  */
@@ -48,6 +48,24 @@ final class AppendOnlyBuilder extends Builder
      * @param  array<string, mixed>  $extra
      */
     public function decrement($column, $amount = 1, array $extra = []): int
+    {
+        throw AuditEntryIsImmutable::cannotUpdateQuery();
+    }
+
+    /**
+     * @param  array<string, float|int|numeric-string>  $columns
+     * @param  array<string, mixed>  $extra
+     */
+    public function incrementEach(array $columns, array $extra = []): int
+    {
+        throw AuditEntryIsImmutable::cannotUpdateQuery();
+    }
+
+    /**
+     * @param  array<string, float|int|numeric-string>  $columns
+     * @param  array<string, mixed>  $extra
+     */
+    public function decrementEach(array $columns, array $extra = []): int
     {
         throw AuditEntryIsImmutable::cannotUpdateQuery();
     }

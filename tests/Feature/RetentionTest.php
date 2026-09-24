@@ -22,6 +22,21 @@ function keepFor(int $days): void
     app()->instance(RetentionPolicy::class, KeepFor::days($days));
 }
 
+it('counts a year as a year, leap days included', function (): void {
+    Carbon::setTestNow('2026-09-25 12:00:00');
+
+    expect(KeepFor::years(1)->cutoff()->toDateString())->toBe('2025-09-25')
+        ->and(KeepFor::years(7)->cutoff()->toDateString())->toBe('2019-09-25')
+        ->and(KeepFor::days(365)->cutoff()->toDateString())->toBe('2025-09-25');
+
+    Carbon::setTestNow();
+});
+
+it('refuses a window that would prune what was just recorded', function (): void {
+    expect(fn () => KeepFor::years(0))->toThrow(InvalidArgumentException::class, 'at least 1')
+        ->and(fn () => KeepFor::days(0))->toThrow(InvalidArgumentException::class, 'at least 1');
+});
+
 it('keeps everything by default', function (): void {
     Audit::record('a');
 
