@@ -3,10 +3,14 @@
 declare(strict_types=1);
 
 use Vimatech\AuditLog\AuditContext;
+use Vimatech\AuditLog\AuditRecorder;
 use Vimatech\AuditLog\Exceptions\AuditEntryHasNoTenant;
 use Vimatech\AuditLog\Exceptions\AuditHasNoCurrentTenant;
 use Vimatech\AuditLog\Facades\Audit;
 use Vimatech\AuditLog\Models\AuditEntry;
+use Vimatech\AuditLog\ResolvedEntry;
+use Vimatech\AuditLog\TenantDecision;
+use Vimatech\AuditLog\Tests\Fixtures\Document;
 use Vimatech\AuditLog\Tests\Fixtures\Lease;
 use Vimatech\AuditLog\Tests\Fixtures\Workspace;
 
@@ -102,4 +106,36 @@ it('reads back the current tenant only, and refuses to guess when there is none'
     app(AuditContext::class)->inTenant($mine);
 
     expect(AuditEntry::query()->forCurrentTenant()->pluck('action')->all())->toBe(['a']);
+});
+
+it('refuses an entry with no tenant from the fluent builder too', function (): void {
+    config()->set('audit-log.require_tenant', true);
+
+    expect(fn () => Audit::action('export.generated')->record())
+        ->toThrow(AuditEntryHasNoTenant::class, 'export.generated')
+        ->and(AuditEntry::query()->count())->toBe(0);
+});
+
+it('refuses an entry with no tenant from the Auditable trait too', function (): void {
+    config()->set('audit-log.require_tenant', true);
+
+    expect(fn () => Document::create(['title' => 'Contract']))
+        ->toThrow(AuditEntryHasNoTenant::class, 'document.created');
+});
+
+it('cannot describe an entry without settling the tenant', function (): void {
+    expect(fn () => new ResolvedEntry(action: 'x'))->toThrow(ArgumentCountError::class)
+        ->and(fn () => new TenantDecision(null))->toThrow(Error::class);
+});
+
+it('takes a directly persisted tenant-less entry as the deliberate decision it is', function (): void {
+    config()->set('audit-log.require_tenant', true);
+
+    $entry = app(AuditRecorder::class)->persist(new ResolvedEntry(
+        action: 'backup.completed',
+        tenant: TenantDecision::none(),
+    ));
+
+    expect($entry->tenant_id)->toBeNull()
+        ->and($entry->action)->toBe('backup.completed');
 });

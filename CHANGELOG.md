@@ -19,6 +19,7 @@ First release.
 - Tenant resolution in three steps: the explicit argument, the subject's `ProvidesAuditTenant`, then `AuditContext`; `audit-log.require_tenant` refuses an entry that resolved none
 - Query scopes `forTenant`, `forCurrentTenant`, `forSubject`, `byActor`, `forAction`, `between`, `latestFirst`; `forCurrentTenant()` throws rather than returning every tenant's rows when the context carries none
 - `RetentionPolicy` contract (`cutoff(): ?DateTimeInterface`), `KeepForever` and `KeepFor::days()` / `KeepFor::years()`, and `audit-log:prune` with `--dry-run` and `--chunk`; a prune records its own `audit_log.pruned` entry
+- `AuditRecorder::persist()` takes one `ResolvedEntry`, whose `TenantDecision` cannot be constructed without settling whether the entry has a tenant; the supported entry points remain `Audit::record()` and `Audit::action()`
 - `AuditEntryRecorded` event, dispatched after every write
 - `audit-log.connection` to keep the entries table on a dedicated connection, at the cost of the entry no longer sharing the business transaction: it can survive a rollback that the recorded action did not
 - `tenant_id`, `actor_id`, `impersonator_id` and `subject_id` are `varchar(64)`, not integers, so a UUID or ULID primary key is recorded as faithfully as a numeric one. Compare them with `$entry->actor->is($model)` or against `$model->getKey()`, never `===` against a bare integer

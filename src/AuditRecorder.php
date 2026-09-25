@@ -47,39 +47,55 @@ final class AuditRecorder
         ?Model $tenant = null,
         array $metadata = [],
     ): AuditEntry {
-        return $this->persist(
+        return $this->persist(new ResolvedEntry(
             action: $action,
+            tenant: $tenant === null
+                ? $this->resolveTenant($action, $subject)
+                : TenantDecision::of($tenant),
             subject: $subject,
             before: $before,
             after: $after,
             reason: $reason ?? $this->ambientReason(),
-            tenant: $tenant ?? $this->tenantFor($subject),
-            tenantDecided: $tenant !== null,
             metadata: $metadata,
-        );
+        ));
     }
 
     /**
-     * @internal PendingEntry has already decided every value, including the ones
-     *           deliberately left empty, which record() cannot tell apart.
-     *
-     * @param  array<string, mixed>  $before
-     * @param  array<string, mixed>  $after
-     * @param  array<string, mixed>  $metadata
+     * The tenant an entry gets when the caller did not name one: the subject's own,
+     * then the one on the context. Refuses instead of returning none when
+     * audit-log.require_tenant is on, which is the only path that can forget.
      */
-    public function persist(
-        string $action,
-        ?Model $subject,
-        array $before,
-        array $after,
-        ?string $reason,
-        ?Model $tenant,
-        bool $tenantDecided,
-        array $metadata,
-    ): AuditEntry {
-        if ($tenant === null && ! $tenantDecided && $this->tenantIsRequired()) {
+    public function resolveTenant(string $action, ?Model $subject): TenantDecision
+    {
+        $tenant = $subject instanceof ProvidesAuditTenant
+            ? $subject->auditTenant()
+            : app(AuditContext::class)->tenant();
+
+        if ($tenant !== null) {
+            return TenantDecision::of($tenant);
+        }
+
+        if ($this->tenantIsRequired()) {
             throw AuditEntryHasNoTenant::for($action);
         }
+
+        return TenantDecision::none();
+    }
+
+    public function ambientReason(): ?string
+    {
+        return app(AuditContext::class)->reason();
+    }
+
+    /**
+     * @internal Takes what PendingEntry and record() have already settled. Public
+     *           only because PHP has no package-private; the supported entry points
+     *           are record() and action().
+     */
+    public function persist(ResolvedEntry $entry): AuditEntry
+    {
+        $tenant = $entry->tenant->model;
+        $subject = $entry->subject;
 
         $context = app(AuditContext::class);
         $actor = $context->actor();
@@ -96,40 +112,26 @@ final class AuditRecorder
             'actor_guard' => $context->actorGuard(),
             'impersonator_type' => $impersonator?->getMorphClass(),
             'impersonator_id' => $impersonator?->getKey(),
-            'action' => $action,
+            'action' => $entry->action,
             'subject_type' => $subject?->getMorphClass(),
             'subject_id' => $subject?->getKey(),
-            'before' => $before === [] ? null : $before,
-            'after' => $after === [] ? null : $after,
-            'reason' => $reason,
+            'before' => $entry->before === [] ? null : $entry->before,
+            'after' => $entry->after === [] ? null : $entry->after,
+            'reason' => $entry->reason,
             'ip' => $context->ip(),
             'user_agent' => $context->userAgent(),
             'request_id' => $context->requestId(),
-            'metadata' => $metadata === [] ? null : $metadata,
+            'metadata' => $entry->metadata === [] ? null : $entry->metadata,
             'occurred_at' => Date::now(),
         ];
 
         $this->assertWithinLimits($attributes);
 
-        $entry = $model::query()->create($attributes);
+        $record = $model::query()->create($attributes);
 
-        event(new AuditEntryRecorded($entry));
+        event(new AuditEntryRecorded($record));
 
-        return $entry;
-    }
-
-    public function tenantFor(?Model $subject): ?Model
-    {
-        if ($subject instanceof ProvidesAuditTenant) {
-            return $subject->auditTenant();
-        }
-
-        return app(AuditContext::class)->tenant();
-    }
-
-    public function ambientReason(): ?string
-    {
-        return app(AuditContext::class)->reason();
+        return $record;
     }
 
     private function tenantIsRequired(): bool
