@@ -27,12 +27,12 @@ it('stores entries and installs the trigger on the configured connection', funct
         ->toThrow(QueryException::class, 'append-only');
 });
 
-it('suspends the trigger on the configured connection by default', function (): void {
+it('opens and closes the pruning gate on the configured connection by default', function (): void {
     Audit::record('old');
     Audit::record('recent');
     $table = (new AuditEntry)->getTable();
 
-    $removed = AppendOnlyTrigger::suspended($table, fn (): int => DB::connection('audit')->table($table)->where('action', 'old')->delete());
+    $removed = AppendOnlyTrigger::whilePruning($table, fn (): int => DB::connection('audit')->table($table)->where('action', 'old')->delete());
 
     expect($removed)->toBe(1)
         ->and(fn () => DB::connection('audit')->table($table)->delete())->toThrow(QueryException::class);

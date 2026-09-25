@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
+use Illuminate\Support\Facades\Crypt;
 use Vimatech\AuditLog\Models\AuditEntry;
 use Vimatech\AuditLog\Tests\Fixtures\Document;
+use Vimatech\AuditLog\Tests\Fixtures\Inspection;
 use Vimatech\AuditLog\Tests\Fixtures\Lease;
 use Vimatech\AuditLog\Tests\Fixtures\Workspace;
 
@@ -76,4 +78,28 @@ it('records a force deletion as force_deleted, without a duplicate deleted entry
 
     expect(AuditEntry::query()->forSubject($document)->orderBy('id')->pluck('action')->all())
         ->toBe(['document.created', 'document.force_deleted']);
+});
+
+it('records before and after in the same representation for cast attributes', function (): void {
+    $inspection = Inspection::create(['performed_on' => '2026-01-01', 'findings' => ['damp']]);
+
+    $inspection->update(['performed_on' => '2026-02-01', 'findings' => ['mould']]);
+
+    $entry = AuditEntry::query()->forAction('inspection.updated')->sole();
+
+    expect($entry->before)->toBe(['findings' => '["damp"]', 'performed_on' => '2026-01-01 00:00:00'])
+        ->and($entry->after)->toBe(['findings' => '["mould"]', 'performed_on' => '2026-02-01 00:00:00']);
+});
+
+it('keeps the plaintext of an encrypted attribute out of the log', function (): void {
+    $inspection = Inspection::create(['access_code' => 'first-code']);
+
+    $inspection->update(['access_code' => 'second-code']);
+
+    $entry = AuditEntry::query()->forAction('inspection.updated')->sole();
+
+    expect($entry->before['access_code'])->not->toBe('first-code')
+        ->and($entry->after['access_code'])->not->toBe('second-code')
+        ->and(Crypt::decryptString($entry->before['access_code']))->toBe('first-code')
+        ->and(Crypt::decryptString($entry->after['access_code']))->toBe('second-code');
 });

@@ -13,6 +13,8 @@ final class PendingEntry
 
     private ?Model $tenant = null;
 
+    private bool $tenantDecided = false;
+
     /** @var array<string, mixed> */
     private array $before = [];
 
@@ -20,6 +22,8 @@ final class PendingEntry
     private array $after = [];
 
     private ?string $reason = null;
+
+    private bool $reasonDecided = false;
 
     /** @var array<string, mixed> */
     private array $metadata = [];
@@ -36,9 +40,18 @@ final class PendingEntry
         return $this;
     }
 
-    public function inTenant(?Model $tenant): self
+    public function inTenant(Model $tenant): self
     {
         $this->tenant = $tenant;
+        $this->tenantDecided = true;
+
+        return $this;
+    }
+
+    public function withoutTenant(): self
+    {
+        $this->tenant = null;
+        $this->tenantDecided = true;
 
         return $this;
     }
@@ -59,9 +72,18 @@ final class PendingEntry
         return $this;
     }
 
-    public function because(?string $reason): self
+    public function because(string $reason): self
     {
         $this->reason = $reason;
+        $this->reasonDecided = true;
+
+        return $this;
+    }
+
+    public function withoutReason(): self
+    {
+        $this->reason = null;
+        $this->reasonDecided = true;
 
         return $this;
     }
@@ -76,13 +98,14 @@ final class PendingEntry
 
     public function record(): AuditEntry
     {
-        return $this->recorder->record(
+        return $this->recorder->persist(
             action: $this->action,
             subject: $this->subject,
             before: $this->before,
             after: $this->after,
-            reason: $this->reason,
-            tenant: $this->tenant,
+            reason: $this->reasonDecided ? $this->reason : $this->recorder->ambientReason(),
+            tenant: $this->tenantDecided ? $this->tenant : $this->recorder->tenantFor($this->subject),
+            tenantDecided: $this->tenantDecided,
             metadata: $this->metadata,
         );
     }

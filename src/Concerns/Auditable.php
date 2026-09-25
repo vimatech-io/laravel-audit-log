@@ -27,7 +27,7 @@ trait Auditable
                 return;
             }
 
-            $before = array_intersect_key($model->getOriginal(), $after);
+            $before = $model->auditableAttributes(array_intersect_key($model->getRawOriginal(), $after));
 
             $model->recordAudit('updated', $before, $after);
         });
@@ -58,14 +58,16 @@ trait Auditable
 
     public function auditName(): string
     {
-        return Str::snake(class_basename($this));
+        $morph = $this->getMorphClass();
+
+        return $morph === static::class ? Str::snake(class_basename($this)) : $morph;
     }
 
     /**
      * @param  array<string, mixed>  $attributes
      * @return array<string, mixed>
      */
-    public function auditableAttributes(array $attributes): array
+    protected function auditableAttributes(array $attributes): array
     {
         /** @var array<int, string> $always */
         $always = config('audit-log.always_exclude', []);

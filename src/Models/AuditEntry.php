@@ -9,7 +9,9 @@ use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Vimatech\AuditLog\AuditContext;
 use Vimatech\AuditLog\Exceptions\AuditEntryIsImmutable;
+use Vimatech\AuditLog\Exceptions\AuditHasNoCurrentTenant;
 
 /**
  * @property int $id
@@ -34,7 +36,15 @@ use Vimatech\AuditLog\Exceptions\AuditEntryIsImmutable;
  */
 class AuditEntry extends Model
 {
+    public const MORPH_KEY_LENGTH = 64;
+
+    public const ACTION_LENGTH = 128;
+
+    public const ACTOR_GUARD_LENGTH = 64;
+
     public const REQUEST_ID_LENGTH = 64;
+
+    public const IP_LENGTH = 45;
 
     public $timestamps = false;
 
@@ -67,6 +77,12 @@ class AuditEntry extends Model
     {
         static::updating(fn (self $entry) => throw AuditEntryIsImmutable::cannotUpdate($entry));
         static::deleting(fn (self $entry) => throw AuditEntryIsImmutable::cannotDelete($entry));
+    }
+
+    /** @param  \Illuminate\Database\Query\Builder  $query */
+    public function newEloquentBuilder($query): AppendOnlyBuilder
+    {
+        return new AppendOnlyBuilder($query);
     }
 
     /** @return MorphTo<Model, $this> */
@@ -102,6 +118,25 @@ class AuditEntry extends Model
         return $query
             ->where('tenant_type', $tenant->getMorphClass())
             ->where('tenant_id', $tenant->getKey());
+    }
+
+    /**
+     * Deliberately not a global scope: one that silently filtered by ambient state
+     * would answer the same question differently depending on who asked, and an
+     * audit log that quietly hides rows is worse than one that shows too many.
+     *
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
+    public function scopeForCurrentTenant(Builder $query): Builder
+    {
+        $tenant = app(AuditContext::class)->tenant();
+
+        if ($tenant === null) {
+            throw AuditHasNoCurrentTenant::forReading();
+        }
+
+        return $query->forTenant($tenant);
     }
 
     /**

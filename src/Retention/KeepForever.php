@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Vimatech\AuditLog\Retention;
 
+use DateTimeInterface;
 use Vimatech\AuditLog\Contracts\RetentionPolicy;
 
 final class KeepForever implements RetentionPolicy
 {
-    public function prune(): int
+    public function cutoff(): ?DateTimeInterface
     {
-        return 0;
+        return null;
     }
 }
