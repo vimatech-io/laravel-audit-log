@@ -110,7 +110,7 @@ jobs:
 
   mysql-append-only:
     runs-on: ubuntu-latest
-    name: Append-only trigger on MySQL/MariaDB
+    name: Append-only trigger on MySQL
 
     services:
       mysql:
@@ -149,6 +149,65 @@ jobs:
           # privilege that grants it, so the test connection uses root
           # against this throwaway service database, not an app-shaped user.
           AUDIT_LOG_TEST_DRIVER: mysql
+          AUDIT_LOG_TEST_HOST: 127.0.0.1
+          AUDIT_LOG_TEST_PORT: 3306
+          AUDIT_LOG_TEST_DATABASE: audit_log
+          AUDIT_LOG_TEST_USERNAME: root
+          AUDIT_LOG_TEST_PASSWORD: audit_log
+        run: vendor/bin/pest
+
+  # `mariadb` is its own Laravel driver name (Illuminate\Database\MariaDbConnection),
+  # not an alias resolved to `mysql`, and AppendOnlyTrigger's match arms, and
+  # the query-builder tests, both branch on the literal string. The job above
+  # never exercised that branch: naming MariaDB in its title didn't run it.
+  mariadb-append-only:
+    runs-on: ubuntu-latest
+    name: Append-only trigger on MariaDB
+
+    services:
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: audit_log
+          MARIADB_DATABASE: audit_log
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, pdo_mysql, openssl
+          coverage: none
+
+      - name: Install dependencies
+        run: |
+          composer config policy.advisories.block false
+          composer require "laravel/framework:13.*" "orchestra/testbench:11.*" "pestphp/pest:^4.0" "pestphp/pest-plugin-laravel:^4.0" --no-interaction --no-update --dev
+          composer update --prefer-stable --no-interaction
+
+      - name: Run tests against MariaDB
+        env:
+          # The trigger SQL this sends is identical to the MySQL job's: the
+          # two share one installMysql()/pruningMysql() implementation, so
+          # this job proves MariaDB accepts that same SQL, not that
+          # different SQL runs. The privilege story is not identical,
+          # though, and was checked rather than copied: MariaDB enforces the
+          # same SUPER-if-binlog-is-on restriction as MySQL (error 1419,
+          # confirmed against a real server with binlog forced on), but the
+          # official mariadb image ships with binary logging off by
+          # default, unlike mysql:8. An app-shaped user would pass here by
+          # accident, without the binlog state that makes the check mean
+          # anything. Root sidesteps that regardless of the image default.
+          AUDIT_LOG_TEST_DRIVER: mariadb
           AUDIT_LOG_TEST_HOST: 127.0.0.1
           AUDIT_LOG_TEST_PORT: 3306
           AUDIT_LOG_TEST_DATABASE: audit_log
