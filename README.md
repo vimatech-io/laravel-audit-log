@@ -1,11 +1,16 @@
-# Laravel Audit Log
+<a href="https://vimatech.io/open-source">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://vimatech.io/packages/header/laravel-audit-log/dark.webp">
+    <img alt="Laravel Audit Log" src="https://vimatech.io/packages/header/laravel-audit-log/light.webp">
+  </picture>
+</a>
+
+# Append-only, tenant-aware audit log for Laravel
 
 [![CI](https://github.com/vimatech-io/laravel-audit-log/actions/workflows/ci.yml/badge.svg)](https://github.com/vimatech-io/laravel-audit-log/actions/workflows/ci.yml)
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/vimatech/laravel-audit-log)](https://packagist.org/packages/vimatech/laravel-audit-log)
 [![Total Downloads](https://img.shields.io/packagist/dt/vimatech/laravel-audit-log)](https://packagist.org/packages/vimatech/laravel-audit-log)
 [![License](https://img.shields.io/packagist/l/vimatech/laravel-audit-log)](https://packagist.org/packages/vimatech/laravel-audit-log)
-
-**Append-only, tenant-aware audit log for Laravel.**
 
 It answers **who did what, to which record, in which tenant, and what changed**, and it guarantees that answer cannot be edited afterwards.
 
