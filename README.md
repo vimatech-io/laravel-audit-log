@@ -310,4 +310,4 @@ The MIT License (MIT). Please see [License File](LICENSE) for more information.
 ## Credits
 
 Built and maintained by [Vimatech](https://vimatech.io).
-Created by [Adel Zemzemi](https://github.com/adelzemzemi).
+Created by [Adel Zemzemi](https://adelzemzemi.com/?utm_source=github&utm_medium=package&utm_campaign=laravel-audit-log), Laravel SaaS architect.
