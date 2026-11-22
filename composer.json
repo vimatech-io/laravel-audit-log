@@ -2,7 +2,7 @@
     "name": "vimatech/laravel-audit-log",
     "description": "Append-only, tenant-aware audit log for Laravel.",
     "keywords": ["laravel", "audit", "audit-log", "activity", "multi-tenant", "append-only"],
-    "homepage": "https://github.com/vimatech-io/laravel-audit-log",
+    "homepage": "https://vimatech.io/open-source/",
     "support": {
         "issues": "https://github.com/vimatech-io/laravel-audit-log/issues",
         "source": "https://github.com/vimatech-io/laravel-audit-log",
@@ -13,7 +13,8 @@
     "authors": [
         {
             "name": "Adel Zemzemi",
-            "email": "hello@adelzemzemi.com"
+            "email": "hello@adelzemzemi.com",
+            "homepage": "https://adelzemzemi.com/"
         }
     ],
     "require": {
